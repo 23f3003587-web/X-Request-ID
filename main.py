@@ -88,9 +88,10 @@ app = FastAPI(
 # ============================================================
 ALLOWED_ORIGINS = [
     "https://app-rtkqna.example.com",
-    # If the exam/verification page uses a different origin, ADD IT HERE
-    # (e.g. "https://rtkqna.example.com" or "https://assess.rtkqna.example.com")
-    # so the browser grader can reach /ping without CORS errors.
+    # ADD the exam page / grader origin here — this is the one causing the error
+    "https://rtkqna.example.com",          # try this first
+    "https://app.rtkqna.example.com",      # or similar variations
+    # If you know the exact origin from the error message / browser console, use that
 ]
 
 # ============================================================
