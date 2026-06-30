@@ -88,10 +88,14 @@ app = FastAPI(
 # ============================================================
 ALLOWED_ORIGINS = [
     "https://app-rtkqna.example.com",
-    # ADD the exam page / grader origin here — this is the one causing the error
-    "https://rtkqna.example.com",          # try this first
-    "https://app.rtkqna.example.com",      # or similar variations
-    # If you know the exact origin from the error message / browser console, use that
+    "https://rtkqna.example.com",
+    "https://app.rtkqna.example.com",
+    "https://grader.rtkqna.example.com",      # very common for grader pages
+    "https://assess.rtkqna.example.com",
+    "https://test.rtkqna.example.com",
+    "https://verify.rtkqna.example.com",
+    # If you open DevTools (F12) → Network tab → failed /ping request → look for "Origin:" header
+    # Paste the exact value here, e.g. "https://abc123.rtkqna.example.com"
 ]
 
 # ============================================================
