@@ -117,7 +117,7 @@ app.add_middleware(
 async def ping(request: Request):
     """GET /ping — returns email + request_id (in body + header)."""
     request_id: str = getattr(request.state, "request_id", "missing-request-id")
-    email = "gangulysiddhartha22@gmail.com"  # your logged-in / submitter address
+    email = "23f3003587@ds.study.iitm.ac.in"  # your logged-in / submitter address
     return {"email": email, "request_id": request_id}
 
 
