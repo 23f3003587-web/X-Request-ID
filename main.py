@@ -87,15 +87,8 @@ app = FastAPI(
 # CORS (Middleware 2) — only assigned origin gets ACAO header
 # ============================================================
 ALLOWED_ORIGINS = [
-    "https://app-rtkqna.example.com",
-    "https://rtkqna.example.com",
-    "https://app.rtkqna.example.com",
-    "https://grader.rtkqna.example.com",      # very common for grader pages
-    "https://assess.rtkqna.example.com",
-    "https://test.rtkqna.example.com",
-    "https://verify.rtkqna.example.com",
-    # If you open DevTools (F12) → Network tab → failed /ping request → look for "Origin:" header
-    # Paste the exact value here, e.g. "https://abc123.rtkqna.example.com"
+    "https://app-rtkqna.example.com",   # assigned origin
+    "https://exam.sanand.workers.dev",  # exam grader page
 ]
 
 # ============================================================
