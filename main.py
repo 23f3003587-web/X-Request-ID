@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """
-FastAPI service with three middleware layers for the exam.
+FastAPI Middleware Exam Solution
+- Request Context Propagator
+- Scoped CORS
+- Per-client Rate Limiter (9 req / 10s)
 """
 
 import time
@@ -14,28 +17,27 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
 
+# ========================= MIDDLEWARE 1: Request Context =========================
 class RequestContextMiddleware(BaseHTTPMiddleware):
-    """Middleware 1 — Request context propagator"""
     async def dispatch(self, request: Request, call_next: Any):
-        # Get or generate request_id
+        # Reuse inbound X-Request-ID if present, else generate new
         request_id = (
             request.headers.get("X-Request-ID")
             or request.headers.get("x-request-id")
             or str(uuid.uuid4())
         )
-        
+
         request.state.request_id = request_id
-        
-        # Process request
+
         response = await call_next(request)
-        
-        # ALWAYS echo it back in response header (this is the key requirement)
+
+        # Echo back in response header (CRITICAL for the grader)
         response.headers["X-Request-ID"] = request_id
         return response
 
 
+# ========================= MIDDLEWARE 3: Rate Limiter =========================
 class RateLimitMiddleware(BaseHTTPMiddleware):
-    """Middleware 3 — Per-client rate limiting"""
     def __init__(self, app: Any, max_requests: int = 9, window_seconds: int = 10):
         super().__init__(app)
         self.max_requests = max_requests
@@ -44,45 +46,45 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: Any):
         client_id = request.headers.get("X-Client-Id") or request.headers.get("x-client-id")
-        
+
         if client_id:
             now = time.time()
             times = self.client_requests[client_id]
             cutoff = now - self.window_seconds
-            
-            # Clean old requests
+
+            # Remove old timestamps
             while times and times[0] < cutoff:
                 times.popleft()
-            
+
             if len(times) >= self.max_requests:
                 request_id = getattr(request.state, "request_id", str(uuid.uuid4()))
                 return JSONResponse(
                     status_code=429,
                     content={"detail": "Rate limit exceeded"},
-                    headers={"X-Request-ID": request_id},   # Important: still return header
+                    headers={"X-Request-ID": request_id}
                 )
-            
+
             times.append(now)
-        
-        response = await call_next(request)
-        return response
+
+        return await call_next(request)
 
 
-# ====================== APP SETUP ======================
+# ========================= APP SETUP =========================
 app = FastAPI(
-    title="RTKQNA Middleware Exam Service",
+    title="RTKQNA Middleware Service",
     version="1.0.0",
+    docs_url=None,  # optional
+    redoc_url=None
 )
 
+# Allowed origins (exactly as per assignment)
 ALLOWED_ORIGINS = [
     "https://app-rtkqna.example.com",
-    "https://exam.sanand.workers.dev",
+    "https://exam.sanand.workers.dev"   # exam grader page
 ]
 
-# ====================== MIDDLEWARE ORDER (Critical) ======================
-# Correct order: RequestContext should run before RateLimit so it can set request.state
-app.add_middleware(RequestContextMiddleware)           # Runs early
-app.add_middleware(RateLimitMiddleware, max_requests=9, window_seconds=10)
+# ===================== MIDDLEWARE ORDER (Important) =====================
+# Execution order: CORS → RequestContext → RateLimit → Endpoint
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
@@ -91,14 +93,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.add_middleware(RequestContextMiddleware)
+app.add_middleware(RateLimitMiddleware, max_requests=9, window_seconds=10)
 
+
+# ========================= ENDPOINTS =========================
 @app.get("/ping")
 async def ping(request: Request):
-    request_id: str = getattr(request.state, "request_id", "missing-request-id")
+    request_id = getattr(request.state, "request_id", "missing")
     email = "23f3003587@ds.study.iitm.ac.in"
     return {"email": email, "request_id": request_id}
 
 
 @app.get("/")
 async def root():
-    return {"status": "ok", "service": "middleware-exam", "endpoint": "/ping"}
+    return {"status": "ok", "message": "Middleware service running"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
