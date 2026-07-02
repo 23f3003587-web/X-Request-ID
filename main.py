@@ -62,6 +62,7 @@ app.add_middleware(
     allow_origins=["https://app-rtkqna.example.com", "https://exam.sanand.workers.dev"],
     allow_methods=["GET", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["X-Request-ID"],
 )
 
 @app.get("/ping")
